@@ -1,0 +1,63 @@
+---
+title: "CLass10"
+author: "Ethan Lai"
+date: "2/18/2022"
+output: pdf_document
+---
+
+What proportion of the MXL sample population is G/G homozygous
+```{r}
+mxl<- read.csv("373531-SampleGenotypes-Homo_sapiens_Variation_Sample_rs8067378.csv")
+head(mxl)
+table(mxl$Genotype..forward.strand.) /nrow(mxl) *100
+
+
+```
+14.065% are G/G homozygous
+
+
+#Population Scale Analysis
+
+Q13: Read this file into R and determine the sample size for each genotype and their
+corresponding median expression levels for each of these genotypes. Hint: The read.table(),
+summary() and boxplot() functions will likely be useful here. There is an example R script
+online to be used ONLY if you are struggling in vein. Note that you can find the medium value
+from saving the output of the boxplot() function to an R object and examining this object.
+There is also the medium() and summary() function that you can use to check your
+understanding.
+```{r}
+expr <- read.table("rs8067378_ENSG00000172057.6.txt")
+exprTable<- table(expr$geno)
+exprTable
+```
+108 A/A, 233 A/G, and 121 G/G
+
+To find the medians:
+```{r}
+exprdf<- data.frame(expr)
+exprAA<- exprdf[exprdf[2]=="A/A",]
+exprAG<- exprdf[exprdf[2]=="A/G",]
+exprGG<- exprdf[exprdf[2]=="G/G",]
+median (exprAA[,3])
+median (exprAG[,3])
+median (exprGG[,3])
+
+
+
+
+
+```
+So the medians for A/A, A/G, and G/G respectively are 31, 25, and 20.
+
+Q14: Generate a boxplot with a box per genotype, what could you infer from the relative
+expression value between A/A and G/G displayed in this plot? Does the SNP effect the
+expression of ORMDL3?
+
+```{r}
+library(ggplot2)
+ggplot(expr, aes(x=geno, y=exp)) + geom_boxplot()
+
+```
+G/G seems to have the lowest expression, with AA the highest, and heterozygous A/G intermediate between the two homozygous genotypes!
+
+

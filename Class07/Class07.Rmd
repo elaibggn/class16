@@ -1,0 +1,164 @@
+---
+title: "Class07 Machine Learning 1"
+author: 'Ethan Lai'
+date: "2/9/0222"
+output: pdf_document
+---
+
+#Clustering Methods
+
+## K-means
+
+First generate some data to test. Concatenate two rnorm samples, and column bind this vector and its reverse.
+
+```{r}
+tmp<- c(rnorm(30,-3), rnorm(30,3))
+x<-cbind(x=tmp, y=rev(tmp))
+plot(x)
+```
+
+```{r}
+k <- kmeans(x, centers=2, nstart=10)
+k
+```
+
+How many points per cluster?
+```{r}
+k$size
+```
+
+What are the centroids of the clusters?
+```{r}
+k$centers
+```
+
+What is the cluster vector?
+```{r}
+kclusters<- k$cluster
+kclusters
+```
+
+```{r}
+plot(x, col=kclusters)
+
+```
+# Recall that R has recycling, so we must be careful
+```{r}
+y<-1:5
+cbind(y,"red")
+```
+
+#GG plot version
+
+```{r}
+library(ggplot2)
+ggplot(data.frame(x),aes(x,y))+geom_point(color=kclusters)
+```
+
+#Hierchical Clustering
+
+Must give hclust a distance matrix as in put, not the raw data. hclust objects have a custom plot function, producing a cluster dendrogram.
+```{r}
+hc<- hclust(dist(x))
+plot(hc)
+#abline(h=10)
+
+```
+Now we "cut" the tree to get our clusters. The function to do so is cutree()
+
+```{r}
+ct<- cutree(hc, h=10)
+
+plot(x, col=ct)
+```
+
+
+
+#  PCA
+PCA is a useful method for analyzing large multidimensional datasets
+
+Import data set of UK foods
+
+```{r}
+
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url,row.names=1)
+
+```
+
+Let's look at x:
+
+```{r}
+head(x)
+```
+
+```{r}
+nrow(x)
+ncol(x)
+```
+
+
+We could plot this with a barplot
+```{r}
+barplot(as.matrix(x), col=rainbow(nrow(x)))
+```
+We can unstack with 'besides=TRUE'
+
+```{r}
+barplot(as.matrix(x), col=rainbow(nrow(x)), beside=TRUE)
+
+```
+
+One plot that is useful is a pairs plot. This produces a matrix of all pairwise correlations.
+
+```{r}
+pairs(x, col=rainbow(nrow(x)), pch=16)
+
+```
+# PCA to the rescue
+
+What does PCA tell us about this data?
+
+The main PCA function in base R is called 'prcomp()'
+
+```{r}
+# Use the prcomp() PCA function 
+
+# note that prcomp rquires transpose of our matrix
+pca <- prcomp( t(x) )
+summary(pca)
+```
+
+# a plot of PC1 vs PC2 is often called a PCA plot or "score plot"
+```{r}
+attributes(pca)
+
+```
+To generate our score plot, we want pca$x component of the resulting object
+
+
+```{r}
+pca$x
+
+```
+
+
+```{r}
+
+colorv<- c("orange", "red", "blue", "green")
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2", xlim=c(-270,500), col=colorv, pch=16)
+text(pca$x[,1], pca$x[,2], colnames(x), col=colorv)
+
+```
+The loadings( aka weights) tell us how the original variables contribute to the PCs
+
+```{r}
+barplot(pca$rotation[,1], las=2)
+```
+
+
+#RNA Seq Dataset
+
+
+
+

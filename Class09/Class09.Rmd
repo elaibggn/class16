@@ -1,0 +1,88 @@
+---
+title: "Class09"
+author: "Ethan Lai"
+date: "2/16/2022"
+output: pdf_document
+---
+
+First, let's look at the PDB statistics:
+
+```{r}
+tbl<- read.csv("Data Export Summary.csv", row.names=1)
+```
+
+##Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+```{r}
+n.type <- colSums(tbl)
+percentages<- (n.type/n.type["Total"] * 100)
+ans<- signif(percentages, 3)
+ans
+
+```
+
+The proportion of Xray sructures is `r ans[1]` % of the total The proportion of NMR sructures is `r ans[2]` % of the total
+
+##Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+ans2<- signif(tbl$Total[1]/ sum (tbl$Total),3) * 100
+ans2
+```
+
+`r ans2` % of the structures are protein
+
+##Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB?
+
+It varies quite a lot depending on our search methodology, but generally several hundred structures
+
+# Inserting a image files
+
+![NS](/Users/ethanlai/Desktop/bggn213/protein.png)
+
+
+```{r}
+library(bio3d)
+
+pdb<- read.pdb("1hsg")
+pdb
+```
+
+```{r}
+aa321(c("PRO", "GLN"))
+```
+
+```{r}
+head(pdb$atom)
+```
+
+
+Lets read a different single adk structure from the database now:
+
+
+```{r}
+aa <- get.seq("1ake_A")
+aa
+```
+
+
+Let's find related sequences with BLAST:
+```{r}
+blast<- blast.pdb(aa)
+```
+
+
+```{r}
+hits<-plot(blast)
+```
+```{r}
+
+hits$pdb.id
+```
+
+
+Now let's find an alpha fold prediction for a protein homologous to our unknown gene:
+
+
+![](/Users/ethanlai/Desktop/bggn213/Class09/novelgene.png)
+

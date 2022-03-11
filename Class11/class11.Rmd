@@ -1,0 +1,182 @@
+---
+title: "Class11"
+author: "Ethan Lai"
+date: "2/23/2022"
+output: pdf_document
+---
+Let's call library(DESeq2) and load our two data files
+```{r}
+library("DESeq2");
+metadata<- read.csv(("airway_metadata.csv"))
+counts<- read.csv("airway_scaledcounts.csv", row.names=1)
+head(counts)
+```
+There are `r nrow(counts)` rows, ie "genes" in this dataset
+
+
+```{r}
+metadata
+```
+It looks like we have four treated (ie with drug) and four control (ie no drug).
+ Does the drug do anything?
+ 
+ We want to compare treated vs control.
+ 
+ Fist, let's make sure the metadata matches the counts data order
+```{r}
+all(metadata$id ==colnames(counts))
+```
+ Let's get going!
+
+First, let's take a summary statistic of all controls vs all treated:
+```{r}
+#metadata[metadata$dex=="control", "id"]
+
+controls<- counts[metadata$dex=="control"]
+treateds<- counts[metadata$dex=="treated"]
+head(controls)
+head(treateds)
+
+```
+
+Now that we have our control and treated data separated, we'll find the mean count values for each row ie gene. We could use `apply()` or more simply `rowMeans()`
+
+```{r}
+control.means<- rowMeans(controls)
+treated.means<-rowMeans(treateds)
+```
+
+Let's plot control vs treated means:
+
+```{r}
+plot( treated.means, control.means,)
+```
+
+Most of the data is in the bottom left. Let's make it a log-log plot
+
+```{r}
+plot( treated.means, control.means, log="xy")
+
+```
+We often use log transformation because it is more intuitive:
+```{r}
+log2(20/20)
+```
+Zero fold change
+
+```{r}
+log2(40/20)
+```
+1 fold log change, meaning doubling.
+
+
+Let's cvompute the log2 fold change
+
+```{r}
+log2fc <- log2(treated.means/control.means)
+```
+
+Let's make a data.frame to store our results to data:
+```{r}
+meancounts<-data.frame(control.means, treated.means, log2fc)
+head(meancounts)
+```
+We need a way to remove NaN and -Inf: We use the which() function in a complicated one-liner.
+```{r}
+to.rm<- unique(which(meancounts[,1:2]==0, arr.ind=TRUE)[,"row"])
+mycounts<- meancounts[-to.rm,]
+```
+
+Q1. How many genes do we have left?
+Q2. How many have a log2fc more than 2?
+
+```{r}
+remainingGenes<- nrow(mycounts)
+```
+
+There are `r remainingGenes` genes left.
+```{r}
+greater<- sum(mycounts$log2fc>2)
+```
+There are `r greater` genes with log2fc >2
+
+
+# DESEq2
+
+```{r}
+library("DESeq2")
+```
+
+First we need to setup the object that DEseq needs with 
+```{r}
+dds <- DESeqDataSetFromMatrix(countData=counts, 
+                              colData=metadata, 
+                              design=~dex)
+dds
+```
+
+```{r}
+dds<- DESeq(dds)
+res<- results(dds)
+res
+```
+
+
+## A main fesult figure
+
+A common main result figure from this type of analysis is a volcano plot. THis is a plot of log2 fold change vs P value
+
+```{r}
+
+plot(res$log2FoldChange, -log(res$padj))
+
+```
+
+Let's color code our significant hits
+
+```{r}
+plot(res$log2FoldChange, -log(res$padj), col=ifelse(res$padj <= 0.05 & (res$log2FoldChange>2 | res$log2FoldChange<=-2), "red", "black"))
+
+```
+
+
+#Pathway Analysis
+
+Let's explore the GAGE package
+```{r}
+library(pathview)
+library(gage)
+library(gageData)
+```
+
+```{r}
+data(kegg.sets.hs)
+
+# Examine the first 2 pathways in this kegg set for humans
+head(kegg.sets.hs, 2)
+
+```
+Let's store the fold change data:
+
+```{r}
+foldchanges = res$log2FoldChange
+names(foldchanges) = res$entrez
+head(foldchanges)
+```
+
+
+Run the gage pathway analysis:
+
+```{r}
+keggres = gage(foldchanges, gsets=kegg.sets.hs)
+attributes(keggres)
+head(keggres$less, 3)
+```
+
+We use the `pathview()` function (in the pathview package)to make a color coded pathway of our RNA seq results
+
+```{r}
+pathview(gene.data=foldchanges, pathway.id="hsa00232")
+
+```
+
